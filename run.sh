@@ -4,7 +4,7 @@
 set -o monitor
 
 # Reads RabbitMQ environment and starts server in the backgroun
-sudo -u nobody configurable-http-proxy &> /var/log/chp.log &
+sudo -u nobody configurable-http-proxy --api-ip ${HOSTNAME} &> /var/log/chp.log &
 
 logfile=/var/log/chp.log
 
