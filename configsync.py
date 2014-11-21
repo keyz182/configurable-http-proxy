@@ -10,7 +10,9 @@ import urllib3.exceptions
 import requests
 
 PREFIX = '/proxy'
-APIURL = 'http://localhost:8001/api/routes/'
+HOSTNAME = os.environ.get("HOSTNAME")
+APIURL = 'http://%s:8001/api/routes/' % HOSTNAME
+TOKEN = os.environ.get("CONFIGPROXY_AUTH_TOKEN")
 
 
 def filter_prefix(d, pref):
@@ -48,12 +50,14 @@ class Config:
         path = os.path.join(PREFIX, 'proxies', proxy)
         target = self.client.read(path)
         payload = {'target': target.value}
-        requests.post(APIURL + proxy, data=json.dumps(payload))
+        requests.post(APIURL + proxy, data=json.dumps(payload),
+                      headers={'Authorization': 'token %s' % TOKEN})
         log.info("I added proxy /%s for %s" % (proxy, target.value))
 
     def delete_proxy(self, proxy):
         # path = os.path.join(PREFIX, 'proxies', proxy)
-        requests.delete(APIURL + proxy)
+        requests.delete(APIURL + proxy,
+                        headers={'Authorization': 'token %s' % TOKEN})
         log.info("I deleted proxy /%s" % proxy)
 
     def sync_proxies(self, proxies):
