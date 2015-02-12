@@ -14,6 +14,7 @@ RUN pip2 install python-etcd urllib3 supervisor-stdout
 ADD configsync.py /configsync.py
 ADD run.sh /run.sh
 ADD proxy.conf /etc/supervisor/conf.d/proxy.conf
+ADD ./supervisord.conf /etc/supervisor/supervisord.conf
 RUN chmod 755 /configsync.py /run.sh
 
 ADD . /srv/configurable-http-proxy
