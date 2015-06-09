@@ -1,4 +1,4 @@
-// jshint node: true
+// jshint jasmine: true
 "use strict";
 
 var util = require('../lib/testutil');
@@ -33,14 +33,14 @@ describe("API Tests", function () {
     it("Basic proxy constructor", function () {
         expect(proxy).toBeDefined();
         expect(proxy.default_target).toBe(undefined);
-        expect(proxy.target_for_url('/')).toEqual({
+        expect(proxy.target_for_req({url: '/'})).toEqual({
             prefix: '/',
             target: "http://127.0.0.1:" + (port + 2)
         });
     });
     
     it("Default target is used for /any/random/url", function () {
-        var target = proxy.target_for_url('/any/random/url');
+        var target = proxy.target_for_req({url: '/any/random/url'});
         expect(target).toEqual({
             prefix: '/',
             target: "http://127.0.0.1:" + (port + 2)
@@ -48,7 +48,7 @@ describe("API Tests", function () {
     });
     
     it("Default target is used for /", function () {
-        var target = proxy.target_for_url('/');
+        var target = proxy.target_for_req({url: '/'});
         expect(target).toEqual({
             prefix: '/',
             target: "http://127.0.0.1:" + (port + 2)
@@ -78,6 +78,24 @@ describe("API Tests", function () {
             var route = proxy.routes['/user/foo'];
             expect(route.target).toEqual(target);
             expect(typeof route.last_activity).toEqual('object');
+            done();
+        });
+    });
+    
+    it("POST /api/routes[/foo%20bar] handles URI escapes", function (done) {
+        var port = 8998;
+        var target = 'http://127.0.0.1:' + port;
+        r.post({
+            url: api_url + '/user/foo%40bar',
+            body: JSON.stringify({target: target}),
+        }, function (error, res, body) {
+            expect(res.statusCode).toEqual(201);
+            expect(res.body).toEqual('');
+            var route = proxy.routes['/user/foo@bar'];
+            expect(route.target).toEqual(target);
+            expect(typeof route.last_activity).toEqual('object');
+            route = proxy.target_for_req({url: '/user/foo@bar/path'});
+            expect(route.target).toEqual(target);
             done();
         });
     });
@@ -162,17 +180,17 @@ describe("API Tests", function () {
                 var route_keys = Object.keys(routes);
                 var expected_keys = Object.keys(t.expected);
                 var key;
-                for (key in routes) {
+                Object.keys(routes).map(function (key) {
                     // check that all routes are expected
                     expect(expected_keys).toContain(key);
-                }
-                for (key in t.expected) {
+                });
+                Object.keys(t.expected).map(function (key) {
                     // check that all expected routes are found
                     expect(route_keys).toContain(key);
                     expect(routes[key].last_activity).toEqual(
                         proxy.routes[key].last_activity.toISOString()
                     );
-                }
+                });
                 seen += 1;
                 if (seen === tests.length) {
                     done();

@@ -5,7 +5,7 @@
 // Copyright (c) Jupyter Development Team.
 // Distributed under the terms of the Modified BSD License.
 //
-// jshint node: true
+
 "use strict";
 
 var fs = require('fs'),
@@ -14,7 +14,7 @@ var fs = require('fs'),
     log = require('winston');
 
 args
-    .version('0.1.2-dev')
+    .version('0.4.1-dev')
     // .option('-h', '--help', 'show help')
     .option('--ip <n>', 'Public-facing IP of the proxy')
     .option('--port <n>', 'Public-facing port of the proxy', parseInt)
@@ -25,11 +25,13 @@ args
     .option('--api-ssl-key <keyfile>', 'SSL key to use, if any, for API requests')
     .option('--api-ssl-cert <certfile>', 'SSL certificate to use, if any, for API requests')
     .option('--default-target <host>', 'Default proxy target (proto://host[:port]')
+    .option('--redirect-port <redirect-port>', 'Redirect HTTP requests on this port to the server on HTTPS')
     // passthrough http-proxy options
     .option('--no-x-forward', "Don't add 'X-forward-' headers to proxied requests")
-    .option('--no-prepend-path', "Proxy /prefix/foo to /foo instead of /prefix/foo instead." + 
-        "  Allows proxied application to be ignorant of proxy prefix.")
+    .option('--no-prepend-path', "Avoid prepending target paths to proxied requests")
+    .option('--no-include-prefix', "Don't include the routing prefix in proxied requests")
     .option('--insecure', "Disable SSL cert verification")
+    .option('--host-routing', "Use host routing (host as first level of path)")
     .option('--log-level <loglevel>', 'Log level (debug, info, warn, error)', 'info');
 
 args.parse(process.argv);
@@ -72,12 +74,21 @@ if (args.apiSslKey || args.apiSslCert) {
 
 // because camelCase is the js way!
 options.default_target = args.defaultTarget;
+options.host_routing = args.hostRouting;
 options.auth_token = process.env.CONFIGPROXY_AUTH_TOKEN;
+options.redirectPort = args.redirectPort;
+
+// certs need to be provided for https redirection
+if (!options.ssl && options.redirectPort) {
+    log.error("HTTPS redirection specified but certificates not provided.");
+    process.exit(2);
+}
 
 // passthrough for http-proxy options
-options.xfwd = args.noXHeaders ? false : true;
 if (args.insecure) options.secure = false;
-options.prependPath = false;
+options.xfwd = args.noXHeaders ? false : true;
+options.prependPath = args.prependPath;
+options.includePrefix = args.includePrefix;
 
 if (!options.auth_token) {
     log.warn("REST API is not authenticated.");
@@ -86,7 +97,7 @@ if (!options.auth_token) {
 var proxy = new ConfigurableProxy(options);
 
 var listen = {};
-listen.port = args.port || 8000;
+listen.port = parseInt(args.port) || 8000;
 listen.ip = args.ip;
 listen.api_ip = args.apiIp || 'localhost';
 listen.api_port = args.apiPort || listen.port + 1;
@@ -104,3 +115,18 @@ log.info("Proxy API at %s://%s:%s/api/routes",
     (listen.api_ip || '*'),
     listen.api_port);
 
+// Redirect HTTP to HTTPS on the proxy's port
+if (options.redirectPort && listen.port !== 80) {
+  var http = require('http');
+  
+  http.createServer(function (req, res) {
+    var host = req.headers['host'].split(':')[0];
+    
+    // Make sure that when we redirect, it's to the port the proxy is running on
+    if (listen.port !== 443) {
+        host = host + ':' + listen.port;
+    }
+    res.writeHead(301, { "Location": "https://" + host + req.url });
+    res.end();
+  }).listen(options.redirectPort);
+}

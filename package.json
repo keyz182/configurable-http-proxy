@@ -1,5 +1,5 @@
 {
-  "version": "0.1.2-dev",
+  "version": "0.4.1-dev",
   "name": "configurable-http-proxy",
   "description": "A configurable-on-the-fly HTTP Proxy",
   "author": "Jupyter Developers",
@@ -10,12 +10,13 @@
   },
   "dependencies": {
     "commander": "~2",
-    "http-proxy": "~1.5.3",
+    "http-proxy": "~1.11",
     "winston": "~0.8",
     "strftime": "~0.8"
   },
   "devDependencies": {
     "jasmine-node": "~2",
+    "jshint": "*",
     "request": "~2",
     "ws": "~0.4"
   },
@@ -30,6 +31,7 @@
     "configurable-http-proxy": "bin/configurable-http-proxy"
   },
   "scripts": {
+    "jshint": "jshint bin/ lib/ test/",
     "test": "jasmine-node --captureExceptions test"
   }
 }
