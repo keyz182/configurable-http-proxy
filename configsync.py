@@ -6,28 +6,33 @@ import sys
 import etcd
 import json
 import time
-import base64
 import urllib3.exceptions
 import requests
-from collections import defaultdict
 
 PREFIX = os.environ.get("PROXY_PREFIX", "/proxy")
-APIURL = 'http://localhost:8001/api/routes/'
+HOSTNAME = os.environ.get("HOSTNAME")
+APIURL = 'http://%s:8001/api/routes/' % HOSTNAME
+TOKEN = os.environ.get("CONFIGPROXY_AUTH_TOKEN")
+
 
 def filter_prefix(d, pref):
     return [k for k in d.keys() if k.startswith("%s/%s/" % (PREFIX, pref))]
 
+
 class log:
     @staticmethod
     def info(msg):
-        print("=> " + msg)
+        sys.stderr.write("=> " + msg + "\n")
+
     @staticmethod
     def error(msg, e=None):
-        print("=! %s : %s" % (msg, str(e)), file=sys.stderr)
+        sys.stderr.write("=! %s : %s\n" % (msg, str(e)))
+
 
 class State:
     def __init__(self):
         self.proxies = set()
+
 
 class Config:
     def __init__(self, host_ip):
@@ -37,19 +42,22 @@ class Config:
     def sync(self, children):
         etc = dict((child.key, child.value) for child in children)
 
-        proxies = set(k.split('/')[-1] for k in filter_prefix(etc, 'proxies'))
+        proxies = set(os.path.relpath(k, "/proxy/proxies")
+                      for k in filter_prefix(etc, 'proxies'))
         self.sync_proxies(proxies)
 
     def create_proxy(self, proxy):
         path = os.path.join(PREFIX, 'proxies', proxy)
         target = self.client.read(path)
         payload = {'target': target.value}
-        r = requests.post(APIURL + proxy, data=json.dumps(payload))
+        requests.post(APIURL + proxy, data=json.dumps(payload),
+                      headers={'Authorization': 'token %s' % TOKEN})
         log.info("I added proxy /%s for %s" % (proxy, target.value))
 
     def delete_proxy(self, proxy):
         # path = os.path.join(PREFIX, 'proxies', proxy)
-        r = requests.delete(APIURL + proxy)
+        requests.delete(APIURL + proxy,
+                        headers={'Authorization': 'token %s' % TOKEN})
         log.info("I deleted proxy /%s" % proxy)
 
     def sync_proxies(self, proxies):
@@ -76,7 +84,8 @@ if __name__ == '__main__':
 
     init = False
     config = Config(host_ip)
-    config.client.set(PREFIX + '/service', json.dumps({'host': host_ip, 'port': 8000}))
+    config.client.set(PREFIX + '/service',
+                      json.dumps({'host': host_ip, 'port': 8000}))
 
     while True:
         try:
