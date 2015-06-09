@@ -11,7 +11,7 @@ import urllib3.exceptions
 import requests
 from collections import defaultdict
 
-PREFIX = '/proxy'
+PREFIX = os.environ.get("PROXY_PREFIX", "/proxy")
 APIURL = 'http://localhost:8001/api/routes/'
 
 def filter_prefix(d, pref):
