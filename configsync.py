@@ -27,11 +27,11 @@ def filter_prefix(d, pref):
 class log:
     @staticmethod
     def info(msg):
-        sys.stderr.write("=> " + msg + "\n")
+        sys.stdout.write("=> " + msg + "\n")
 
     @staticmethod
     def error(msg, e=None):
-        sys.stderr.write("=! %s : %s\n" % (msg, str(e)))
+        sys.stdout.write("=! %s : %s\n" % (msg, str(e)))
 
 
 class State:
