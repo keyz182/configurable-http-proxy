@@ -28,10 +28,13 @@ class log:
     @staticmethod
     def info(msg):
         sys.stdout.write("=> " + msg + "\n")
+        sys.stdout.flush()
+
 
     @staticmethod
     def error(msg, e=None):
-        sys.stdout.write("=! %s : %s\n" % (msg, str(e)))
+        sys.stderr.write("=! %s : %s\n" % (msg, str(e)))
+        sys.stderr.flush()
 
 
 class State:
