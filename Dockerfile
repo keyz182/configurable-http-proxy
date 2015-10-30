@@ -3,7 +3,7 @@ MAINTAINER Kieran David Evans <keyz182@gmail.com>
 
 RUN apk --progress add --update supervisor musl python3 python3-dev build-base curl \
   && pip3 install --upgrade pip \
-  && pip3 install python-etcd urllib3 supervisor-stdout \
+  && pip3 install python-etcd urllib3 \
   && apk --progress del --purge --rdepends python3-dev build-base \
   && rm -rf /var/cache/apk/*
 
