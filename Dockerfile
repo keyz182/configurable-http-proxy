@@ -1,18 +1,17 @@
-FROM node:latest
-MAINTAINER Kacper Kowalik <xarthisius.kk@gmail.com>
+FROM mhart/alpine-node:latest
+MAINTAINER Kieran David Evans <keyz182@gmail.com>
 
-# Install base
-RUN apt-get update && \
-    apt-get install -y curl sudo python-dev python-pip vim supervisor && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk --progress add --update supervisor musl python python-dev build-base curl \
+  && pip install --upgrade pip \
+  && pip install python-etcd urllib3 supervisor-stdout \
+  && apk --progress del --purge --rdepends python-dev build-base \
+  && rm -rf /var/cache/apk/*
 
-# Installs Configuration Synchronization service
-RUN pip2 install python-etcd urllib3 supervisor-stdout
 
 # Add and run scripts
 ADD configsync.py /configsync.py
 ADD run.sh /run.sh
+RUN mkdir -p /etc/supervisor/conf.d/
 ADD proxy.conf /etc/supervisor/conf.d/proxy.conf
 ADD ./supervisord.conf /etc/supervisor/supervisord.conf
 RUN chmod 755 /configsync.py /run.sh
