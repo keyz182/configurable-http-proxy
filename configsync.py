@@ -16,7 +16,7 @@ HOSTNAME = os.environ.get("HOSTNAME")
 ETCDHOST = os.environ.get("ETCDHOST","172.17.42.1")
 ETCDPORT = int(os.environ.get("ETCDPORT","2379"))
 
-APIURL = 'http://%s:8001/api/routes/' % HOSTNAME
+APIURL = 'http://127.0.0.1:8001/api/routes/'
 TOKEN = os.environ.get("CONFIGPROXY_AUTH_TOKEN")
 
 
