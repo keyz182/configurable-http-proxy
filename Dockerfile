@@ -13,7 +13,7 @@ ADD configsync.py /configsync.py
 ADD run.sh /run.sh
 RUN mkdir -p /etc/supervisor/conf.d/
 ADD proxy.conf /etc/supervisor/conf.d/proxy.conf
-ADD ./supervisord.conf /etc/supervisor/supervisord.conf
+ADD ./supervisord.conf /etc/supervisord.conf
 RUN chmod 755 /configsync.py /run.sh
 
 ADD . /srv/configurable-http-proxy
