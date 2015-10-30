@@ -11,7 +11,11 @@ RUN apk --progress add --update supervisor musl python3 python3-dev build-base c
 # Add and run scripts
 ADD configsync.py /configsync.py
 ADD run.sh /run.sh
+
 RUN mkdir -p /etc/supervisor/conf.d/
+RUN mkdir -p /var/log/supervisor/
+RUN mkdir -p /var/run/
+
 ADD proxy.conf /etc/supervisor/conf.d/proxy.conf
 ADD ./supervisord.conf /etc/supervisord.conf
 RUN chmod 755 /configsync.py /run.sh
