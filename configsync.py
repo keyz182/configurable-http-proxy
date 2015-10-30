@@ -11,6 +11,11 @@ import requests
 
 PREFIX = os.environ.get("PROXY_PREFIX", "/proxy")
 HOSTNAME = os.environ.get("HOSTNAME")
+
+#CoreOS defaults for access to etcd2 from within containers
+ETCDHOST = os.environ.get("ETCDHOST","172.17.42.1")
+ETCDPORT = int(os.environ.get("ETCDPORT","2379"))
+
 APIURL = 'http://%s:8001/api/routes/' % HOSTNAME
 TOKEN = os.environ.get("CONFIGPROXY_AUTH_TOKEN")
 
@@ -35,9 +40,9 @@ class State:
 
 
 class Config:
-    def __init__(self, host_ip):
+    def __init__(self, host, port):
         self.state = State()
-        self.client = etcd.Client(host=host_ip, port=4001)
+        self.client = etcd.Client(host=host, port=port)
 
     def sync(self, children):
         etc = dict((child.key, child.value) for child in children)
@@ -80,10 +85,10 @@ class Config:
 
 if __name__ == '__main__':
     host_ip = os.environ.get('COREOS_PRIVATE_IPV4', None)
-    log.info("Connecting to etcd at %s" % host_ip)
+    log.info("Connecting to etcd at %s:%s" % (ETCDHOST, ETCDPORT))
 
     init = False
-    config = Config(host_ip)
+    config = Config(ETCDHOST, ETCDPORT)
     config.client.set(PREFIX + '/service',
                       json.dumps({'host': host_ip, 'port': 8000}))
 
