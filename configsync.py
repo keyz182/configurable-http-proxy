@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 from __future__ import print_function
 
 import os
@@ -27,11 +27,14 @@ def filter_prefix(d, pref):
 class log:
     @staticmethod
     def info(msg):
-        sys.stderr.write("=> " + msg + "\n")
+        sys.stdout.write("=> " + msg + "\n")
+        sys.stdout.flush()
+
 
     @staticmethod
     def error(msg, e=None):
         sys.stderr.write("=! %s : %s\n" % (msg, str(e)))
+        sys.stderr.flush()
 
 
 class State:
